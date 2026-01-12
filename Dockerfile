@@ -36,5 +36,7 @@ WORKDIR /home/container
 # Copy entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 CMD ["/entrypoint.sh"]

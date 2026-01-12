@@ -5,4 +5,4 @@ echo "Java version:"
 java -version
 
 # Replace variables and start server
-eval ${STARTUP}
+eval 'start.sh'

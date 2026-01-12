@@ -39,6 +39,13 @@ if [ ! -f hytale-downloader ]; then
   rm -f hytale-downloader-windows-amd64.exe QUICKSTART.md hytale-downloader.zip >/dev/null 2>&1
 fi
 
+# Print downloader version
+echo -e "${BLUE}Hytale Downloader:${NC} $(./hytale-downloader -version 2>/dev/null || echo unknown)"
+
+# Check for downloader updates (non-fatal)
+echo -e "${BLUE}Checking for downloader updates...${NC}"
+./hytale-downloader -check-update >/dev/null 2>&1 || true
+
 # First run: download server + assets
 if [ ! -f HytaleServer.jar ]; then
   echo -e "${YELLOW}Hytale server files not found.${NC}"
@@ -52,6 +59,11 @@ if [ ! -f HytaleServer.jar ]; then
   done
 fi
 
+# Print game version (optional but nice)
+GAME_VERSION="$(./hytale-downloader -print-version 2>/dev/null || true)"
+[ -n "$GAME_VERSION" ] && echo -e "${BLUE}Hytale Game Version:${NC} ${GAME_VERSION}"
+
+echo
 echo -e "${GREEN}Starting Hytale server...${NC}"
 echo
 

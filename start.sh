@@ -9,6 +9,24 @@ YELLOW='\033[1;33m'
 RED='\033[1;31m'
 NC='\033[0m'
 
+# Ensure downloader exists
+if [ ! -f hytale-downloader ]; then
+  echo -e "${YELLOW}Hytale downloader not found. Downloading...${NC}"
+
+  curl -L -o hytale-downloader.zip https://downloader.hytale.com/hytale-downloader.zip
+  unzip -o hytale-downloader.zip
+
+  mv hytale-downloader-linux-amd64 hytale-downloader
+  chmod +x hytale-downloader
+
+  rm -f hytale-downloader-windows-amd64.exe
+  rm -f QUICKSTART.md
+  rm -f hytale-downloader.zip
+
+  echo -e "${GREEN}Downloader installed.${NC}"
+  echo
+fi
+
 # First run: download server + assets
 if [ ! -f HytaleServer.jar ]; then
   echo -e "${YELLOW}Hytale server files not found.${NC}"
@@ -22,7 +40,6 @@ if [ ! -f HytaleServer.jar ]; then
   echo -e "${RED}Do NOT restart the server during authentication.${NC}"
   echo
 
-  # Run downloader (OAuth device flow)
   ./hytale-downloader --skip-update-check || true
 
   echo
@@ -37,10 +54,9 @@ if [ ! -f HytaleServer.jar ]; then
   echo
 fi
 
-# Sanity check
+# Final sanity check
 if [ ! -f HytaleServer.jar ]; then
   echo -e "${RED}ERROR: Server files missing after authentication.${NC}"
-  echo -e "${RED}Please restart the server and complete login.${NC}"
   exit 1
 fi
 

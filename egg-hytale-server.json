@@ -4,7 +4,7 @@
         "version": "PTDL_v2",
         "update_url": null
     },
-    "exported_at": "2026-01-13T14:11:50+00:00",
+    "exported_at": "2026-01-13T21:23:46+00:00",
     "name": "Hytale Server",
     "author": "admin@luxxy.cloud",
     "description": null,
@@ -18,7 +18,7 @@
         "files": "{}",
         "startup": "{\r\n    \"done\": \"Hytale Server Booted!\"\r\n}",
         "logs": "{}",
-        "stop": "^C"
+        "stop": "stop"
     },
     "scripts": {
         "installation": {
@@ -52,40 +52,30 @@
             "name": "Accept Early Plugins",
             "description": "Allow loading unsupported early plugins.",
             "env_variable": "ACCEPT_EARLY_PLUGINS",
-            "default_value": "false",
+            "default_value": "0",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
+            "rules": "required|in:0,1",
             "field_type": "text"
         },
         {
             "name": "Allow OP Commands",
             "description": "Allow operator commands on the server.",
             "env_variable": "ALLOW_OP",
-            "default_value": "false",
+            "default_value": "0",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
+            "rules": "required|in:0,1",
             "field_type": "text"
         },
         {
             "name": "Enable Backups",
             "description": "Enable automatic server backups.",
             "env_variable": "ENABLE_BACKUPS",
-            "default_value": "false",
+            "default_value": "0",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|in:true,false",
-            "field_type": "text"
-        },
-        {
-            "name": "Enable Backups",
-            "description": "Enable automatic server backups.",
-            "env_variable": "ENABLE_BACKUPS",
-            "default_value": "false",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": "required|in:true,false",
+            "rules": "required|in:0,1",
             "field_type": "text"
         },
         {

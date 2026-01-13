@@ -1,119 +1,112 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-cd /home/container || exit 1
+cd /home/container
 
-# ─────────────────────────────────────────────
-# Colors
-# ─────────────────────────────────────────────
-BLUE='\033[1;34m'
-GREEN='\033[1;32m'
-YELLOW='\033[1;33m'
-RED='\033[1;31m'
-NC='\033[0m'
+echo "Hytale Server Startup Script"
+echo "-----------------------------"
 
-# ─────────────────────────────────────────────
-# Egg variables / defaults
-# ─────────────────────────────────────────────
+# ==============================
+# Environment defaults
+# ==============================
 SERVER_PORT="${SERVER_PORT:-5520}"
 AUTH_MODE="${AUTH_MODE:-authenticated}"
-ENABLE_BACKUPS="${ENABLE_BACKUPS:-false}"
+ASSETS_PATH="${ASSETS_PATH:-Assets.zip}"
+
+ACCEPT_EARLY_PLUGINS="${ACCEPT_EARLY_PLUGINS:-0}"
+ALLOW_OP="${ALLOW_OP:-0}"
+ENABLE_BACKUPS="${ENABLE_BACKUPS:-0}"
 BACKUP_DIR="${BACKUP_DIR:-backups}"
 BACKUP_FREQUENCY="${BACKUP_FREQUENCY:-60}"
 
-JAVA_ARGS=()
-[ "${ACCEPT_EARLY_PLUGINS}" = "true" ] && JAVA_ARGS+=(--accept-early-plugins)
-[ "${ALLOW_OP}" = "true" ] && JAVA_ARGS+=(--allow-op)
+# ==============================
+# Resolve toggle flags (0/1)
+# ==============================
+EARLY_PLUGINS_FLAG=""
+ALLOW_OP_FLAG=""
+BACKUPS_FLAGS=""
 
-if [ "${ENABLE_BACKUPS}" = "true" ]; then
-  JAVA_ARGS+=(--backup)
-  JAVA_ARGS+=(--backup-dir "${BACKUP_DIR}")
-  JAVA_ARGS+=(--backup-frequency "${BACKUP_FREQUENCY}")
+if [[ "${ACCEPT_EARLY_PLUGINS}" == "1" ]]; then
+  EARLY_PLUGINS_FLAG="--accept-early-plugins"
 fi
 
-# ─────────────────────────────────────────────
-# Ensure downloader exists
-# ─────────────────────────────────────────────
-if [ ! -f hytale-downloader ]; then
-  echo -e "${YELLOW}Hytale downloader not found. Downloading...${NC}"
-  curl -sSL -o hytale-downloader.zip https://downloader.hytale.com/hytale-downloader.zip >/dev/null 2>&1
-  unzip -oq hytale-downloader.zip >/dev/null 2>&1
-  mv hytale-downloader-linux-amd64 hytale-downloader >/dev/null 2>&1
+if [[ "${ALLOW_OP}" == "1" ]]; then
+  ALLOW_OP_FLAG="--allow-op"
+fi
+
+if [[ "${ENABLE_BACKUPS}" == "1" ]]; then
+  BACKUPS_FLAGS="--backup --backup-dir ${BACKUP_DIR} --backup-frequency ${BACKUP_FREQUENCY}"
+fi
+
+# ==============================
+# Ensure Hytale Downloader exists
+# ==============================
+if [[ ! -f "./hytale-downloader" ]]; then
+  echo "Hytale downloader not found. Downloading..."
+  curl -sSL https://downloader.hytale.com/hytale-downloader.zip -o hytale-downloader.zip
+  unzip -qo hytale-downloader.zip
+  mv hytale-downloader-linux-amd64 hytale-downloader
   chmod +x hytale-downloader
-  rm -f hytale-downloader-windows-amd64.exe QUICKSTART.md hytale-downloader.zip >/dev/null 2>&1
+  rm -f hytale-downloader.zip
 fi
 
-echo -e "${BLUE}Hytale Downloader:${NC} $(./hytale-downloader -version 2>/dev/null || echo unknown)"
-./hytale-downloader -check-update >/dev/null 2>&1 || true
+# ==============================
+# Show downloader version & update
+# ==============================
+./hytale-downloader -version || true
+./hytale-downloader -check-update || true
 
-# ─────────────────────────────────────────────
+# ==============================
 # Download server if missing
-# ─────────────────────────────────────────────
-if [ ! -f Server/HytaleServer.jar ]; then
-  if [ ! -f .hytale-downloader-credentials.json ]; then
-    echo -e "${YELLOW}Server not installed.${NC}"
-    echo -e "${GREEN}Authentication required to download server files.${NC}"
-    echo
-    echo -e "${BLUE}When prompted:${NC}"
-    echo " • Open the URL shown"
-    echo " • Enter the device code"
-    echo " • Complete login in your browser"
-    echo
-    echo -e "${RED}Do NOT restart the server during authentication.${NC}"
-    echo
-  else
-    echo -e "${YELLOW}Server files missing, re-downloading...${NC}"
-  fi
-
-  ./hytale-downloader --skip-update-check || true
+# ==============================
+if [[ ! -d "./Server" ]]; then
+  echo "Hytale server files not found."
+  echo "Authentication required to download server files."
+  ./hytale-downloader
 fi
 
-# ─────────────────────────────────────────────
-# Find downloaded patch ZIP
-# ─────────────────────────────────────────────
-PATCH_ZIP="$(ls -1 *.zip 2>/dev/null | grep -v Assets.zip | head -n1 || true)"
+# ==============================
+# Locate assets ZIP
+# ==============================
+if [[ ! -f "${ASSETS_PATH}" ]]; then
+  echo "Assets not found, locating latest patchline..."
+  ASSETS_PATH="$(ls -1 *.zip | head -n 1 || true)"
+fi
 
-if [ -z "$PATCH_ZIP" ]; then
-  echo -e "${RED}ERROR: No patch ZIP found after download.${NC}"
+if [[ ! -f "${ASSETS_PATH}" ]]; then
+  echo "ERROR: Assets ZIP not found."
   exit 1
 fi
 
-# ─────────────────────────────────────────────
-# Extract patch ZIP if server not present
-# ─────────────────────────────────────────────
-if [ ! -f Server/HytaleServer.jar ]; then
-  echo -e "${YELLOW}Extracting server files from ${PATCH_ZIP}...${NC}"
-  unzip -oq "$PATCH_ZIP" >/dev/null 2>&1
+echo "Using assets: ${ASSETS_PATH}"
+
+# ==============================
+# Ensure server jar exists
+# ==============================
+if [[ ! -f "./Server/HytaleServer.jar" ]]; then
+  echo "Extracting server files..."
+  unzip -qo "${ASSETS_PATH}" -d .
 fi
 
-# ─────────────────────────────────────────────
-# Final sanity checks
-# ─────────────────────────────────────────────
-if [ ! -f Server/HytaleServer.jar ]; then
-  echo -e "${RED}ERROR: Server/HytaleServer.jar still not found after extraction.${NC}"
+if [[ ! -f "./Server/HytaleServer.jar" ]]; then
+  echo "ERROR: HytaleServer.jar not found after extraction."
   exit 1
 fi
 
-if [ ! -f Assets.zip ]; then
-  echo -e "${RED}ERROR: Assets.zip not found after extraction.${NC}"
-  exit 1
-fi
-
-# ─────────────────────────────────────────────
-# Start server
-# ─────────────────────────────────────────────
-echo
-echo -e "${GREEN}Starting Hytale server...${NC}"
-echo
+# ==============================
+# Start the server
+# ==============================
+echo "Starting Hytale server..."
 
 exec java \
   -Xms128M \
   -XX:MaxRAMPercentage=95.0 \
   -Dterminal.jline=false \
   -Dterminal.ansi=true \
-  # -Xmx${SERVER_MEMORY}M \
-  -jar Server/HytaleServer.jar \
-  --assets Assets.zip \
+  -jar ./Server/HytaleServer.jar \
+  --assets "${ASSETS_PATH}" \
   --auth-mode "${AUTH_MODE}" \
   --bind "0.0.0.0:${SERVER_PORT}" \
-  "${JAVA_ARGS[@]}"
+  ${EARLY_PLUGINS_FLAG} \
+  ${ALLOW_OP_FLAG} \
+  ${BACKUPS_FLAGS}

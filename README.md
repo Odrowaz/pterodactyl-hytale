@@ -40,3 +40,44 @@ Designed for **game server providers** and **self-hosters** who want a reliable,
 2. Import the Egg JSON into your Pterodactyl panel
 3. Create a new server using the **Hytale Egg**
 4. Ensure the following settings are used:
+
+
+/auth login device
+
+AFTER YOU HAVE VERIFIED YOUR SERVER DO: /auth persistence Encrypted
+
+## 🔐 Authentication (Required)
+
+On the **first startup**, the Hytale server requires OAuth authentication.
+
+### Step 1: Login
+
+Run the following command in the **server console**:
+
+```yaml
+/auth login device
+```
+
+
+Follow the instructions shown:
+1. Open the provided URL
+2. Enter the device code
+3. Complete login in your browser
+
+⚠️ **Do not restart the server while authentication is in progress.**
+
+---
+
+### Step 2: Enable Authentication Persistence (IMPORTANT)
+
+After you have **successfully verified and logged into the server**, run this command **once**:
+```yaml
+/auth persistence encrypted
+```
+
+This will:
+- Securely store authentication credentials
+- Persist authentication across restarts
+- Prevent repeated OAuth login prompts
+
+⚠️ **If this step is skipped, authentication may be lost after a restart.**

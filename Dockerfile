@@ -30,11 +30,28 @@ RUN apt-get update && \
     apt-get install -y temurin-25-jdk && \
     rm -rf /var/lib/apt/lists/*
 
+
+
 # Pterodactyl expects this directory
 RUN mkdir -p /home/container
 WORKDIR /home/container
 
+ENV NODE_VERSION=20.19.5
+RUN apt install -y curl
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+ENV NVM_DIR=/root/.nvm
+RUN . "$NVM_DIR/nvm.sh" && nvm install ${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm use v${NODE_VERSION}
+RUN . "$NVM_DIR/nvm.sh" && nvm alias default v${NODE_VERSION}
+ENV PATH="/node/bin/:${PATH}"
+RUN mv /root/.nvm/versions/node/v$NODE_VERSION /node
+RUN chmod 755 -R /node
+RUN node --version
+RUN npm --version
+
 # Copy entrypoint
+COPY main.js /main.js
+RUN chmod 755 /main.js
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 COPY start.sh /start.sh

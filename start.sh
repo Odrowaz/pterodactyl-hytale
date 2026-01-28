@@ -39,31 +39,9 @@ if [[ "${ENABLE_BACKUPS}" == "1" ]]; then
 fi
 
 # ==============================
-# Ensure Hytale Downloader exists
-# ==============================
-if [[ ! -f "./hytale-downloader" ]]; then
-  echo "Hytale downloader not found. Downloading..."
-  curl -sSL https://downloader.hytale.com/hytale-downloader.zip -o hytale-downloader.zip
-  unzip -qo hytale-downloader.zip
-  mv hytale-downloader-linux-amd64 hytale-downloader
-  chmod +x hytale-downloader
-  rm -f hytale-downloader.zip
-fi
-
-# ==============================
 # Show downloader version & update
 # ==============================
-./hytale-downloader -version || true
-./hytale-downloader -check-update || true
-
-# ==============================
-# Download server if missing
-# ==============================
-if [[ ! -d "./Server" ]]; then
-  echo "Hytale server files not found."
-  echo "Authentication required to download server files."
-  ./hytale-downloader
-fi
+/node/bin/node /main.js
 
 # ==============================
 # Locate assets ZIP
